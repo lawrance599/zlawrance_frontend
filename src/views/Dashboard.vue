@@ -18,7 +18,8 @@ const showAnimation = ref(false);
 // 处理传感器点击
 function handleSensorClick(code: string) {
   console.log('点击传感器:', code);
-  // 可以在这里打开传感器详情或跳转到数据管理页面
+  // 跳转到数据管理页面，并携带sensorCode参数
+  router.push({ path: '/data', query: { sensorCode: code } });
 }
 
 // 退出登录

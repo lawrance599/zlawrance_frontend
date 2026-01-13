@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useSensorStore } from '@/stores/sensor';
+import { pointsApi } from '@/api/points';
 import * as echarts from 'echarts';
 import type { ECharts } from 'echarts';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const sensorStore = useSensorStore();
+
+// 有效日期范围（first_observation到last_observation）
+const validDateRange = ref({
+  min: '',
+  max: ''
+});
 
 // 视图模式
 const viewMode = ref<'chart' | 'table'>('chart');
@@ -63,8 +71,50 @@ function logout() {
 
 // 选择传感器
 async function selectPoint(point: typeof sensorStore.points[0]) {
+  await selectPointWithAutoLoad(point);
+}
+
+// 自动加载数据（包含30天范围和日期限制）
+async function selectPointWithAutoLoad(point: typeof sensorStore.points[0]) {
   sensorStore.selectSensor(point);
-  await fetchData();
+
+  try {
+    const stats = await pointsApi.getStats(point.code);
+    if (stats?.last_observation && stats?.first_observation) {
+      const lastObs = new Date(stats.last_observation);
+      const firstObs = new Date(stats.first_observation);
+      const thirtyDaysAgo = new Date(lastObs.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // 设置有效日期范围（first_observation到last_observation）
+      validDateRange.value.min = formatDateTime(firstObs);
+      validDateRange.value.max = formatDateTime(lastObs);
+
+      // 限制30天范围不超出first_observation
+      const startCalc = firstObs > thirtyDaysAgo ? firstObs : thirtyDaysAgo;
+      startDate.value = formatDateTime(startCalc);
+      endDate.value = formatDateTime(lastObs);
+
+      await fetchData();
+    } else {
+      validDateRange.value = { min: '', max: '' };
+      await fetchData();
+    }
+  } catch (error) {
+    console.error('获取测点统计数据失败:', error);
+    validDateRange.value = { min: '', max: '' };
+    await fetchData();
+  }
+}
+
+// 辅助函数：格式化日期时间为datetime-local格式
+function formatDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
 
 // 获取监测数据
@@ -74,7 +124,19 @@ async function fetchData() {
   const code = sensorStore.selectedSensor.code;
   const type = sensorStore.selectedSensor.sensor_type as 'EX' | 'TC' | 'IP';
 
-  await sensorStore.fetchData(type, code, startDate.value || undefined, endDate.value || undefined);
+  // 自动补全秒（如果没有的话）
+  const formatWithSeconds = (dateStr: string) => {
+    if (!dateStr) return dateStr;
+    if (dateStr.length === 16) {
+      return dateStr + ':00';
+    }
+    return dateStr;
+  };
+
+  const formattedStart = formatWithSeconds(startDate.value);
+  const formattedEnd = formatWithSeconds(endDate.value);
+
+  await sensorStore.fetchData(type, code, formattedStart || undefined, formattedEnd || undefined);
 
   if (viewMode.value === 'chart') {
     await nextTick();
@@ -204,7 +266,7 @@ function openAddDialog() {
   if (!sensorStore.selectedSensor) return;
 
   addForm.value = {
-    observation_time: new Date().toISOString().slice(0, 16),
+    observation_time: new Date().toISOString().slice(0, 19),
     reservoir_level: undefined,
     value: undefined,
     lr_value: undefined,
@@ -274,8 +336,18 @@ window.addEventListener('resize', () => {
   chartInstance?.resize();
 });
 
-onMounted(() => {
+onMounted(async () => {
   sensorStore.fetchPoints();
+  // 检查路由参数中的sensorCode
+  const sensorCode = route.query.sensorCode as string;
+  if (sensorCode) {
+    // 等待测点数据加载完成
+    await sensorStore.fetchPoints();
+    const point = sensorStore.points.find(p => p.code === sensorCode);
+    if (point) {
+      await selectPointWithAutoLoad(point);
+    }
+  }
 });
 </script>
 
@@ -379,12 +451,18 @@ onMounted(() => {
             <input
               type="datetime-local"
               v-model="startDate"
+              :min="validDateRange.min"
+              :max="validDateRange.max"
+              step="1"
               class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             />
             <span class="text-slate-500">至</span>
             <input
               type="datetime-local"
               v-model="endDate"
+              :min="validDateRange.min"
+              :max="validDateRange.max"
+              step="1"
               class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             />
             <button
@@ -483,6 +561,7 @@ onMounted(() => {
             <input
               type="datetime-local"
               v-model="addForm.observation_time"
+              step="1"
               required
               class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
