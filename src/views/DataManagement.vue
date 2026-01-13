@@ -33,7 +33,7 @@ const chartLimit = ref(20);
 
 // 分页状态（表格）
 const currentPage = ref(1);
-const pageSize = 10;
+const pageSize = 13;
 
 // 表格当前页数据
 const tablePageData = computed(() => {
@@ -214,7 +214,7 @@ async function loadChartData() {
   renderChart();
 }
 
-// 获取表格数据（全量，用于前端分页）
+// 获取表格数据
 async function fetchTableData() {
   if (!sensorStore.selectedSensor) return;
 
@@ -224,7 +224,14 @@ async function fetchTableData() {
   const formattedStart = formatWithSeconds(startDate.value);
   const formattedEnd = formatWithSeconds(endDate.value);
 
-  await sensorStore.fetchTableData(type, code, formattedStart || undefined, formattedEnd || undefined);
+  // 确保 sensorStats 加载完成
+  if (!sensorStore.sensorStats) {
+    const stats = await pointsApi.getStats(code);
+    sensorStore.sensorStats = stats;
+  }
+
+  const limit = sensorStore.sensorStats?.total_records;
+  await sensorStore.fetchTableData(type, code, limit, formattedStart || undefined, formattedEnd || undefined);
 }
 
 // 渲染图表

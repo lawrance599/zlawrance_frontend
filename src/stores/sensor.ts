@@ -110,17 +110,16 @@ export const useSensorStore = defineStore('sensor', () => {
     }
   }
 
-  // 获取表格全量数据（用于前端分页）
-  async function fetchTableData(type: 'EX' | 'TC' | 'IP', code: string, start?: string, end?: string) {
+  // 获取表格数据（用于前端分页）
+  async function fetchTableData(type: 'EX' | 'TC' | 'IP', code: string, limit: number, start?: string, end?: string) {
     dataLoading.value = true;
     try {
-      // 不限制 limit，获取全量数据
       if (type === 'EX') {
-        tableExtensometerData.value = await dataApi.getExtensometer({ id: code, start, end });
+        tableExtensometerData.value = await dataApi.getExtensometer({ id: code, start, end, limit });
       } else if (type === 'TC') {
-        tableHydrostaticLevelData.value = await dataApi.getHydrostaticLevel({ id: code, start, end });
+        tableHydrostaticLevelData.value = await dataApi.getHydrostaticLevel({ id: code, start, end, limit });
       } else if (type === 'IP') {
-        tableInvertedPlumbLineData.value = await dataApi.getInvertedPlumbLine({ id: code, start, end });
+        tableInvertedPlumbLineData.value = await dataApi.getInvertedPlumbLine({ id: code, start, end, limit });
       }
     } finally {
       dataLoading.value = false;
