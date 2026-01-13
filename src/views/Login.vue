@@ -26,8 +26,13 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-900 flex items-center justify-center">
-    <div class="w-full max-w-md px-6">
+  <div class="min-h-screen wave-background flex items-center justify-center">
+    <!-- 波浪层 -->
+    <div class="wave-layer"></div>
+    <div class="wave-layer"></div>
+    <div class="wave-layer"></div>
+
+    <div class="w-full max-w-md px-6 relative z-10">
       <!-- Logo 和标题 -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-white mb-2">智慧水利平台</h1>
@@ -148,3 +153,59 @@ async function handleLogin() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.wave-background {
+  position: relative;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.wave-layer {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+}
+
+.wave-layer:nth-child(1) {
+  top: 0;
+  background: linear-gradient(180deg, #1e40af 0%, #0ea5e9 100%);
+  animation: waveRise 4s ease-in-out infinite;
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,60 C150,120 350,0 600,60 C850,120 1050,0 1200,60 L1200,0 L0,0 Z' fill='white'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,60 C150,120 350,0 600,60 C850,120 1050,0 1200,60 L1200,0 L0,0 Z' fill='white'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+}
+
+.wave-layer:nth-child(2) {
+  top: -10%;
+  opacity: 0.7;
+  background: linear-gradient(180deg, #3b82f6 0%, #22d3ee 100%);
+  animation: waveRise 5s ease-in-out infinite reverse;
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,40 C200,100 400,20 600,60 C800,100 1000,20 1200,80 L1200,0 L0,0 Z' fill='white'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,40 C200,100 400,20 600,60 C800,100 1000,20 1200,80 L1200,0 L0,0 Z' fill='white'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+}
+
+.wave-layer:nth-child(3) {
+  top: -5%;
+  opacity: 0.5;
+  background: linear-gradient(180deg, #06b6d4 0%, #67e8f9 100%);
+  animation: waveRise 6s ease-in-out infinite;
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,80 C300,20 500,100 800,40 C1000,0 1100,60 1200,20 L1200,0 L0,0 Z' fill='white'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,80 C300,20 500,100 800,40 C1000,0 1100,60 1200,20 L1200,0 L0,0 Z' fill='white'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+}
+
+@keyframes waveRise {
+  0%, 100% {
+    transform: translateX(-2%) translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(2%) translateY(-15%) scaleY(1.1);
+  }
+}
+</style>
