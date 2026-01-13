@@ -1,0 +1,1319 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "默认模块",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "用户登录",
+        "deprecated": false,
+        "description": "用户使用用户名/手机号",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "login_type": {
+                    "description": "登录类型(手机还是用户名)",
+                    "example": "phone/username",
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "登录用户的描述符(手机号/用户名",
+                    "example": "",
+                    "type": "string"
+                  },
+                  "password": {
+                    "description": "密码",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "login_type",
+                  "id",
+                  "password"
+                ]
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "string",
+                      "description": "登陆用户的jwt token",
+                      "title": "jwt token"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "获取当前用户信息",
+        "deprecated": false,
+        "description": "获取jwt token对应的用户的信息",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "description": "给定用户的信息",
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "jwt token": []
+          }
+        ]
+      }
+    },
+    "/api/auth/oauth/providers": {
+      "get": {
+        "summary": "获取支持的第三方",
+        "deprecated": false,
+        "description": "获取本系统支持的OAuth第三方",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/%E6%8F%90%E4%BE%9B%E5%95%86%E4%BF%A1%E6%81%AF"
+                      },
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/oauth/{provider}/authorize": {
+      "get": {
+        "summary": "重定向至提供商",
+        "deprecated": false,
+        "description": "重定向至提供商的授权地址",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "description": "provider的name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/oauth/{provider}/callback": {
+      "get": {
+        "summary": "OAuth回调",
+        "deprecated": false,
+        "description": "提供商的回调函数",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "description": "提供商名字",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "description": "响应数据",
+                      "$ref": "#/components/schemas/Oauth%E7%99%BB%E5%BD%95%E5%93%8D%E5%BA%94"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "列出用户",
+        "deprecated": false,
+        "description": "列出所有用户(分页)",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      },
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "jwt token": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "创建用户",
+        "deprecated": false,
+        "description": "新增用户",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "password": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "phone": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "name": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "department": {
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "string",
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/points": {
+      "get": {
+        "summary": "列出所有测点",
+        "deprecated": false,
+        "description": "列出所有测点",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/%E6%B5%8B%E7%82%B9%E4%BF%A1%E6%81%AF"
+                      },
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/points/{code}": {
+      "get": {
+        "summary": "获取测点详情",
+        "deprecated": false,
+        "description": "获取特定测点的描述数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "传感器的编号",
+            "required": true,
+            "example": "EX1-3",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "description": "响应数据",
+                      "$ref": "#/components/schemas/%E6%B5%8B%E7%82%B9%E4%BF%A1%E6%81%AF"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/data/{id}/inverted-plumb-line": {
+      "get": {
+        "summary": "倒垂线数据",
+        "deprecated": false,
+        "description": "查询指定传感器的倒垂线数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": "IP4",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "example": "2011-04-23T00:00:00",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "example": "2011-04-25T00:00:00",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sensor_code": {
+                            "type": "string",
+                            "title": "",
+                            "description": "传感器编号"
+                          },
+                          "ob_time": {
+                            "type": "string",
+                            "title": "",
+                            "description": "观测时间"
+                          },
+                          "reservoir_level": {
+                            "type": "null",
+                            "description": "库水位"
+                          },
+                          "lr_value": {
+                            "type": "number",
+                            "description": "左右岸值"
+                          },
+                          "ud_value": {
+                            "type": "number",
+                            "description": "上下游值"
+                          }
+                        },
+                        "required": [
+                          "sensor_code",
+                          "ob_time",
+                          "lr_value",
+                          "ud_value"
+                        ]
+                      },
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/data/{id}/extensometer": {
+      "get": {
+        "summary": "引张线数据",
+        "deprecated": false,
+        "description": "引张线数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "分页限制",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "分页跳过",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "开始时间",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "结束时间",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/%E5%BC%95%E5%BC%A0%E7%BA%BF%E6%95%B0%E6%8D%AE"
+                      },
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/data/{id}/hydrostatic-level": {
+      "get": {
+        "summary": "静力水准数据",
+        "deprecated": false,
+        "description": "静力水准数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "分页限制",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "分页跳过",
+            "required": true,
+            "example": 100,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "结束时间",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "开始时间",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/%E9%9D%99%E5%8A%9B%E6%B0%B4%E5%87%86%E6%95%B0%E6%8D%AE"
+                      },
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/data/{sensor_code}/extensometer": {
+      "post": {
+        "summary": "添加引张线数据",
+        "deprecated": false,
+        "description": "添加倒垂线数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sensor_code",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "observation_time",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reservoir_level",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null",
+                      "description": "响应数据"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/data/{sensor_code}/hydrostatic-level": {
+      "post": {
+        "summary": "添加静力水准",
+        "deprecated": false,
+        "description": "添加静力水准数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sensor_code",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "observation_time",
+            "in": "query",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/data/{sensor_code}/inverted-plumb-line": {
+      "post": {
+        "summary": "添加倒垂线数据",
+        "deprecated": false,
+        "description": "添加倒垂线数据内容",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sensor_code",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "observation_time",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reservoir_level",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lr_value",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "ud_value",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/stats/points/{code}": {
+      "get": {
+        "summary": "测点统计数据",
+        "deprecated": false,
+        "description": "单个测点统计信息",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": "EX1-3",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "description": "响应数据",
+                      "$ref": "#/components/schemas/%E6%B5%8B%E7%82%B9%E7%BB%9F%E8%AE%A1%E4%BF%A1%E6%81%AF"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "data": {
+            "description": "响应数据",
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "data"
+        ],
+        "title": "响应"
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "用户名"
+          },
+          "phone": {
+            "type": "string",
+            "title": "用户手机号"
+          },
+          "name": {
+            "type": "string",
+            "title": "真实名字"
+          },
+          "department": {
+            "type": "string",
+            "title": "部门"
+          },
+          "id": {
+            "type": "string",
+            "title": "用户id"
+          }
+        },
+        "required": [
+          "username",
+          "id"
+        ],
+        "title": "用户信息"
+      },
+      "测点信息": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "测点名字"
+          },
+          "sensor_type": {
+            "type": "string",
+            "description": "观测点类型"
+          },
+          "height": {
+            "type": "number",
+            "description": "高程"
+          },
+          "install_date": {
+            "type": "string",
+            "description": "安装时间"
+          },
+          "section": {
+            "type": "string",
+            "description": "部位"
+          },
+          "status": {
+            "type": "integer",
+            "description": "状态"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "最后更新时间"
+          }
+        },
+        "required": [
+          "code",
+          "sensor_type",
+          "height",
+          "install_date",
+          "section",
+          "status",
+          "updated_at"
+        ]
+      },
+      "测点统计信息": {
+        "type": "object",
+        "properties": {
+          "sensor_code": {
+            "type": "string",
+            "description": "测点编号"
+          },
+          "first_observation": {
+            "type": "string",
+            "description": "最旧观测时间"
+          },
+          "last_observation": {
+            "type": "string",
+            "description": "最后观测时间"
+          },
+          "total_records": {
+            "type": "integer",
+            "description": "记录总量"
+          },
+          "max_value": {
+            "type": "number",
+            "description": "最大值"
+          },
+          "min_value": {
+            "type": "number",
+            "description": "最小值"
+          },
+          "max_observation_time": {
+            "type": "string",
+            "description": "最大值观测时间"
+          },
+          "min_observation_time": {
+            "type": "string",
+            "description": "最小值观测时间"
+          }
+        },
+        "required": [
+          "sensor_code",
+          "first_observation",
+          "last_observation",
+          "total_records",
+          "max_value",
+          "min_value",
+          "max_observation_time",
+          "min_observation_time"
+        ]
+      },
+      "引张线数据": {
+        "type": "object",
+        "properties": {
+          "sensor_code": {
+            "type": "string",
+            "description": "传感器编号"
+          },
+          "ob_time": {
+            "type": "string",
+            "description": "观测时间"
+          },
+          "reservoir_level": {
+            "type": "number",
+            "description": "库水位"
+          },
+          "value": {
+            "type": "number",
+            "description": "测量值"
+          }
+        },
+        "required": [
+          "sensor_code",
+          "ob_time",
+          "value"
+        ]
+      },
+      "倒垂线数据": {
+        "type": "object",
+        "properties": {
+          "sensor_code": {
+            "type": "string",
+            "title": "",
+            "description": "传感器编号"
+          },
+          "ob_time": {
+            "type": "string",
+            "title": "",
+            "description": "观测时间"
+          },
+          "reservoir_level": {
+            "type": "null",
+            "description": "库水位"
+          },
+          "lr_value": {
+            "type": "number",
+            "description": "左右岸值"
+          },
+          "ud_value": {
+            "type": "number",
+            "description": "上下游值"
+          }
+        },
+        "required": [
+          "sensor_code",
+          "ob_time",
+          "lr_value",
+          "ud_value"
+        ]
+      },
+      "静力水准数据": {
+        "type": "object",
+        "properties": {
+          "sensor_code": {
+            "type": "string",
+            "title": "",
+            "description": "传感器编号"
+          },
+          "ob_time": {
+            "type": "string",
+            "title": "",
+            "description": "观测时间"
+          },
+          "value": {
+            "type": "string",
+            "description": "测值"
+          }
+        },
+        "required": [
+          "sensor_code",
+          "ob_time",
+          "value"
+        ]
+      },
+      "提供商信息": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Oauth登录响应": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "用户的登录凭证"
+          },
+          "user_name": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "用户id"
+          }
+        },
+        "required": [
+          "token",
+          "user_id",
+          "user_name"
+        ]
+      }
+    },
+    "responses": {},
+    "securitySchemes": {
+      "jwt token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "servers": [],
+  "security": []
+}
