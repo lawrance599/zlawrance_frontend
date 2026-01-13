@@ -164,14 +164,9 @@ async function fetchData(limit?: number) {
   }
 }
 
-// 增量加载更多数据
-async function loadMoreData() {
+// 加载图表数据（全量替换）
+async function loadChartData() {
   if (!sensorStore.selectedSensor) return;
-
-  const currentDataLength = currentData.value.length;
-  const newLimit = chartLimit.value;
-
-  if (newLimit <= currentDataLength) return; // 不需要加载更多
 
   const code = sensorStore.selectedSensor.code;
   const type = sensorStore.selectedSensor.sensor_type as 'EX' | 'TC' | 'IP';
@@ -179,8 +174,7 @@ async function loadMoreData() {
   const formattedStart = formatWithSeconds(startDate.value);
   const formattedEnd = formatWithSeconds(endDate.value);
 
-  // 增量请求：limit = 新值 - 当前数量, offset = 当前数量
-  await sensorStore.fetchMoreData(type, code, formattedStart || undefined, formattedEnd || undefined, newLimit - currentDataLength, currentDataLength);
+  await sensorStore.fetchData(type, code, formattedStart || undefined, formattedEnd || undefined, chartLimit.value);
 
   await nextTick();
   renderChart();
@@ -392,11 +386,9 @@ window.addEventListener('resize', () => {
   chartInstance?.resize();
 });
 
-// 监听图表点数变化（增量加载）
-watch(chartLimit, async (newVal, oldVal) => {
-  if (newVal > oldVal) {
-    await loadMoreData();
-  }
+// 监听图表点数变化（全量加载）
+watch(chartLimit, async () => {
+  await loadChartData();
 });
 
 // 监听页码变化（表格分页）
