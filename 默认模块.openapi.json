@@ -798,35 +798,36 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "observation_time",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "reservoir_level",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "value",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observation_time": {
+                    "type": "string",
+                    "example": ""
+                  },
+                  "reservoir_level": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "value": {
+                    "type": "number",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "observation_time"
+                ]
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "",
@@ -871,26 +872,29 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "observation_time",
-            "in": "query",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "value",
-            "in": "query",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "number"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observation_time": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "",
@@ -923,44 +927,37 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "observation_time",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "reservoir_level",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "lr_value",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "ud_value",
-            "in": "query",
-            "description": "",
-            "required": false,
-            "schema": {
-              "type": "number"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observation_time": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "reservoir_level": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "lr_value": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "ud_value": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "",
