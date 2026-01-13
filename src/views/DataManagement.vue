@@ -111,17 +111,17 @@ async function selectPointWithAutoLoad(point: typeof sensorStore.points[0]) {
       startDate.value = formatDateTime(startCalc);
       endDate.value = formatDateTime(lastObs);
 
-      await fetchData(chartLimit.value);
+      await fetchData();
       await fetchTableData();
     } else {
       validDateRange.value = { min: '', max: '' };
-      await fetchData(chartLimit.value);
+      await fetchData();
       await fetchTableData();
     }
   } catch (error) {
     console.error('获取测点统计数据失败:', error);
     validDateRange.value = { min: '', max: '' };
-    await fetchData(chartLimit.value);
+    await fetchData();
     await fetchTableData();
   }
 }
@@ -147,7 +147,7 @@ function formatWithSeconds(dateStr: string): string {
 }
 
 // 获取监测数据
-async function fetchData(limit?: number) {
+async function fetchData() {
   if (!sensorStore.selectedSensor) return;
 
   const code = sensorStore.selectedSensor.code;
@@ -156,7 +156,7 @@ async function fetchData(limit?: number) {
   const formattedStart = formatWithSeconds(startDate.value);
   const formattedEnd = formatWithSeconds(endDate.value);
 
-  await sensorStore.fetchData(type, code, formattedStart || undefined, formattedEnd || undefined, limit);
+  await sensorStore.fetchData(type, code, formattedStart || undefined, formattedEnd || undefined, chartLimit.value);
 
   if (viewMode.value === 'chart') {
     await nextTick();
@@ -526,7 +526,7 @@ onMounted(async () => {
               class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             />
             <button
-              @click="fetchData"
+              @click="loadChartData"
               class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg"
             >
               查询
