@@ -1,30 +1,41 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { authApi, type UserInfo } from '@/api/auth';
-import client from '@/api/client';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { authApi, type UserInfo } from "@/api/auth";
+import client from "@/api/client";
 
-export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem('token'));
-  const user = ref<UserInfo | null>(JSON.parse(localStorage.getItem('user') || 'null'));
+export const useAuthStore = defineStore("auth", () => {
+  const token = ref<string | null>(localStorage.getItem("token"));
+  const user = ref<UserInfo | null>(
+    JSON.parse(localStorage.getItem("user") || "null")
+  );
   const loading = ref(false);
   const error = ref<string | null>(null);
 
   const isAuthenticated = computed(() => !!token.value);
-  const isAdmin = computed(() => user.value?.role === 'admin');
+  const isAdmin = computed(() => user.value?.role === "admin");
 
-  async function login(login_type: 'username' | 'phone', id: string, password: string) {
+  async function login(
+    login_type: "username" | "phone",
+    id: string,
+    password: string
+  ) {
     loading.value = true;
     error.value = null;
     try {
-      const response = await client.post('/auth/login', { login_type, id, password });
+      const response = await client.post("/auth/login", {
+        login_type,
+        id,
+        password,
+      });
       const newToken = response.data.data;
       token.value = newToken;
-      localStorage.setItem('token', newToken);
-      console.log('登录成功，token:', newToken);
+      localStorage.setItem("token", newToken);
+      await fetchUser();
+      console.log("fetchUser 调用完成, user.value:", user.value);
       return true;
     } catch (e: any) {
-      console.error('登录失败:', e);
-      error.value = e.response?.data?.data || '登录失败';
+      console.error("登录失败:", e);
+      error.value = e.response?.data?.data || "登录失败";
       return false;
     } finally {
       loading.value = false;
@@ -34,8 +45,8 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     token.value = null;
     user.value = null;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   }
 
   async function fetchUser() {
@@ -43,8 +54,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const userInfo = await authApi.getMe();
       user.value = userInfo;
-      localStorage.setItem('user', JSON.stringify(userInfo));
-    } catch {
+      localStorage.setItem("user", JSON.stringify(userInfo));
+    } catch (e: any) {
+      console.error("fetchUser 获取用户信息失败:", e);
       logout();
     }
   }

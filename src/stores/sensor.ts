@@ -18,11 +18,16 @@ export const useSensorStore = defineStore('sensor', () => {
   const sensorStats = ref<SensorStats | null>(null);
   const statsLoading = ref(false);
 
-  // 监测数据
+  // 监测数据（图表用）
   const extensometerData = ref<ExtensometerData[]>([]);
   const hydrostaticLevelData = ref<HydrostaticLevelData[]>([]);
   const invertedPlumbLineData = ref<InvertedPlumbLineData[]>([]);
   const dataLoading = ref(false);
+
+  // 表格数据（全量，用于前端分页）
+  const tableExtensometerData = ref<ExtensometerData[]>([]);
+  const tableHydrostaticLevelData = ref<HydrostaticLevelData[]>([]);
+  const tableInvertedPlumbLineData = ref<InvertedPlumbLineData[]>([]);
 
   // 统计数据
   const totalPoints = computed(() => points.value.length);
@@ -105,6 +110,23 @@ export const useSensorStore = defineStore('sensor', () => {
     }
   }
 
+  // 获取表格全量数据（用于前端分页）
+  async function fetchTableData(type: 'EX' | 'TC' | 'IP', code: string, start?: string, end?: string) {
+    dataLoading.value = true;
+    try {
+      // 不限制 limit，获取全量数据
+      if (type === 'EX') {
+        tableExtensometerData.value = await dataApi.getExtensometer({ id: code, start, end });
+      } else if (type === 'TC') {
+        tableHydrostaticLevelData.value = await dataApi.getHydrostaticLevel({ id: code, start, end });
+      } else if (type === 'IP') {
+        tableInvertedPlumbLineData.value = await dataApi.getInvertedPlumbLine({ id: code, start, end });
+      }
+    } finally {
+      dataLoading.value = false;
+    }
+  }
+
   // 选择传感器
   function selectSensor(point: SensorPoint | null) {
     selectedSensor.value = point;
@@ -126,6 +148,9 @@ export const useSensorStore = defineStore('sensor', () => {
     hydrostaticLevelData,
     invertedPlumbLineData,
     dataLoading,
+    tableExtensometerData,
+    tableHydrostaticLevelData,
+    tableInvertedPlumbLineData,
     totalPoints,
     onlinePoints,
     offlinePoints,
@@ -137,6 +162,7 @@ export const useSensorStore = defineStore('sensor', () => {
     fetchData,
     fetchMoreData,
     fetchPageData,
+    fetchTableData,
     selectSensor,
     setSensorType,
   };

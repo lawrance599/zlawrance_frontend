@@ -25,9 +25,33 @@ const chartLimit = ref(20);
 const currentPage = ref(1);
 const pageSize = 10;
 
+// 表格当前页数据
+const tablePageData = computed(() => {
+  if (!sensorStore.selectedSensor) return [];
+  const type = sensorStore.selectedSensor.sensor_type;
+  const start = (currentPage.value - 1) * pageSize;
+  const end = start + pageSize;
+
+  if (type === 'EX') return sensorStore.tableExtensometerData.slice(start, end);
+  if (type === 'TC') return sensorStore.tableHydrostaticLevelData.slice(start, end);
+  if (type === 'IP') return sensorStore.tableInvertedPlumbLineData.slice(start, end);
+  return [];
+});
+
+// 表格总数据量
+const tableTotalRecords = computed(() => {
+  if (!sensorStore.selectedSensor) return 0;
+  const type = sensorStore.selectedSensor.sensor_type;
+  if (type === 'EX') return sensorStore.tableExtensometerData.length;
+  if (type === 'TC') return sensorStore.tableHydrostaticLevelData.length;
+  if (type === 'IP') return sensorStore.tableInvertedPlumbLineData.length;
+  return 0;
+});
+
+// 分页总页数
 const totalPages = computed(() => {
-  if (!sensorStore.sensorStats?.total_records) return 1;
-  return Math.ceil(sensorStore.sensorStats.total_records / pageSize);
+  if (tableTotalRecords.value === 0) return 1;
+  return Math.ceil(tableTotalRecords.value / pageSize);
 });
 
 // 视图模式
@@ -180,18 +204,17 @@ async function loadChartData() {
   renderChart();
 }
 
-// 获取表格数据（分页）
+// 获取表格数据（全量，用于前端分页）
 async function fetchTableData() {
   if (!sensorStore.selectedSensor) return;
 
   const code = sensorStore.selectedSensor.code;
   const type = sensorStore.selectedSensor.sensor_type as 'EX' | 'TC' | 'IP';
-  const offset = (currentPage.value - 1) * pageSize;
 
   const formattedStart = formatWithSeconds(startDate.value);
   const formattedEnd = formatWithSeconds(endDate.value);
 
-  await sensorStore.fetchPageData(type, code, pageSize, offset, formattedStart || undefined, formattedEnd || undefined);
+  await sensorStore.fetchTableData(type, code, formattedStart || undefined, formattedEnd || undefined);
 }
 
 // 渲染图表
@@ -378,6 +401,16 @@ watch(viewMode, async (newMode) => {
   if (newMode === 'chart') {
     await nextTick();
     renderChart();
+  } else if (newMode === 'table') {
+    await fetchTableData();
+  }
+});
+
+// 监听时间范围变化，重新获取表格数据
+watch([startDate, endDate], async () => {
+  if (viewMode.value === 'table') {
+    currentPage.value = 1;
+    await fetchTableData();
   }
 });
 
@@ -422,14 +455,13 @@ onMounted(async () => {
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2 text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           <span>{{ authStore.user?.username || '用户' }}</span>
         </div>
-        <button
-          @click="logout"
-          class="px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-        >
+        <button @click="logout"
+          class="px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
           退出
         </button>
       </div>
@@ -438,22 +470,19 @@ onMounted(async () => {
     <div class="flex-1 flex overflow-hidden">
       <!-- 左侧导航 -->
       <aside class="w-16 bg-slate-800 border-r border-slate-700 flex flex-col items-center py-4 gap-2">
-        <router-link
-          to="/"
+        <router-link to="/"
           class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-          title="首页"
-        >
+          title="首页">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
         </router-link>
-        <router-link
-          to="/data"
-          class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600 text-white"
-          title="数据管理"
-        >
+        <router-link to="/data" class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600 text-white"
+          title="数据管理">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </router-link>
       </aside>
@@ -463,11 +492,8 @@ onMounted(async () => {
         <!-- 工具栏 -->
         <div class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center gap-4 flex-wrap">
           <!-- 新增数据按钮 -->
-          <button
-            @click="openAddDialog"
-            :disabled="!sensorStore.selectedSensor"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2"
-          >
+          <button @click="openAddDialog" :disabled="!sensorStore.selectedSensor"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -476,30 +502,22 @@ onMounted(async () => {
 
           <!-- 传感器类型筛选 -->
           <div class="flex bg-slate-900 rounded-lg p-1">
-            <button
-              v-for="type in ['all', 'EX', 'TC', 'IP']"
-              :key="type"
-              @click="setType(type as any)"
-              :class="[
-                'px-3 py-1.5 text-sm rounded-md transition-colors',
-                sensorStore.selectedSensorType === type
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-              ]"
-            >
+            <button v-for="type in ['all', 'EX', 'TC', 'IP']" :key="type" @click="setType(type as any)" :class="[
+              'px-3 py-1.5 text-sm rounded-md transition-colors',
+              sensorStore.selectedSensorType === type
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            ]">
               {{ type === 'all' ? '全部' : type }}
             </button>
           </div>
 
           <!-- 传感器选择 -->
-          <select
-            :value="sensorStore.selectedSensor?.code || ''"
-            @change="(e) => {
-              const point = sensorStore.points.find(p => p.code === (e.target as HTMLSelectElement).value);
-              if (point) selectPoint(point);
-            }"
-            class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-          >
+          <select :value="sensorStore.selectedSensor?.code || ''" @change="(e) => {
+            const point = sensorStore.points.find(p => p.code === (e.target as HTMLSelectElement).value);
+            if (point) selectPoint(point);
+          }"
+            class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">请选择传感器</option>
             <option v-for="point in filteredPoints" :key="point.code" :value="point.code">
               {{ point.code }} ({{ point.section }})
@@ -508,27 +526,14 @@ onMounted(async () => {
 
           <!-- 时间范围 -->
           <div class="flex items-center gap-2">
-            <input
-              type="datetime-local"
-              v-model="startDate"
-              :min="validDateRange.min"
-              :max="validDateRange.max"
+            <input type="datetime-local" v-model="startDate" :min="validDateRange.min" :max="validDateRange.max"
               step="1"
-              class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-            />
+              class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
             <span class="text-slate-500">至</span>
-            <input
-              type="datetime-local"
-              v-model="endDate"
-              :min="validDateRange.min"
-              :max="validDateRange.max"
-              step="1"
-              class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-            />
-            <button
-              @click="loadChartData"
-              class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg"
-            >
+            <input type="datetime-local" v-model="endDate" :min="validDateRange.min" :max="validDateRange.max" step="1"
+              class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+            <button @click="loadChartData"
+              class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg">
               查询
             </button>
           </div>
@@ -538,22 +543,16 @@ onMounted(async () => {
         <div class="flex-1 overflow-hidden p-4">
           <!-- 视图切换 -->
           <div class="flex bg-slate-800 rounded-lg p-1 w-fit mb-4">
-            <button
-              @click="viewMode = 'chart'"
-              :class="[
-                'px-4 py-2 text-sm rounded-md transition-colors',
-                viewMode === 'chart' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-              ]"
-            >
+            <button @click="viewMode = 'chart'" :class="[
+              'px-4 py-2 text-sm rounded-md transition-colors',
+              viewMode === 'chart' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+            ]">
               图表视图
             </button>
-            <button
-              @click="viewMode = 'table'"
-              :class="[
-                'px-4 py-2 text-sm rounded-md transition-colors',
-                viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-              ]"
-            >
+            <button @click="viewMode = 'table'" :class="[
+              'px-4 py-2 text-sm rounded-md transition-colors',
+              viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+            ]">
               表格视图
             </button>
           </div>
@@ -566,80 +565,75 @@ onMounted(async () => {
             <div v-else class="h-full bg-slate-800 rounded-xl p-4 relative">
               <!-- 显示点数控制 -->
               <div class="absolute top-4 right-4 flex items-center gap-2 z-10">
-                <span class="text-xs text-slate-400">显示点数:</span>
-                <input
-                  type="number"
-                  v-model.number="chartLimit"
-                  min="20"
-                  step="10"
-                  class="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white text-sm"
-                />
+                <span class="text-xs text-slate-400">最多显示点数:</span>
+                <input type="number" v-model.number="chartLimit" min="20" step="10"
+                  class="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white text-sm" />
               </div>
               <div ref="chartRef" class="w-full h-full min-h-[400px]"></div>
             </div>
           </div>
 
           <!-- 表格视图 -->
-          <div v-else class="h-full bg-slate-800 rounded-xl overflow-hidden flex flex-col">
+          <div v-else class="h-full bg-slate-800 rounded-xl overflow-hidden flex flex-col relative">
             <div v-if="!sensorStore.selectedSensor" class="flex-1 flex items-center justify-center text-slate-500">
               请从左侧选择一个传感器查看数据
             </div>
-            <div v-else class="flex-1 overflow-auto">
+            <div v-else class="flex-1 overflow-auto p-0">
               <table class="w-full text-sm">
                 <thead class="bg-slate-900 sticky top-0">
                   <tr>
                     <th class="px-4 py-3 text-left text-slate-400 font-medium">传感器编码</th>
                     <th class="px-4 py-3 text-left text-slate-400 font-medium">观测时间</th>
-                    <th v-if="currentSensorType === 'EX' || currentSensorType === 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">水位</th>
-                    <th v-if="currentSensorType === 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">左右位移</th>
-                    <th v-if="currentSensorType === 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">上下游位移</th>
-                    <th v-if="currentSensorType !== 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">监测值</th>
+                    <th v-if="currentSensorType === 'EX' || currentSensorType === 'IP'"
+                      class="px-4 py-3 text-left text-slate-400 font-medium">水位</th>
+                    <th v-if="currentSensorType === 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">左右位移
+                    </th>
+                    <th v-if="currentSensorType === 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">上下游位移
+                    </th>
+                    <th v-if="currentSensorType !== 'IP'" class="px-4 py-3 text-left text-slate-400 font-medium">监测值
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="(item, index) in currentData"
-                    :key="index"
-                    class="border-t border-slate-700 hover:bg-slate-700/50"
-                  >
+                  <tr v-for="(item, index) in tablePageData" :key="index"
+                    class="border-t border-slate-700 hover:bg-slate-700/50">
                     <td class="px-4 py-3 text-white">{{ (item as any).sensor_code }}</td>
                     <td class="px-4 py-3 text-slate-300">{{ (item as any).ob_time }}</td>
-                    <td v-if="currentSensorType === 'EX' || currentSensorType === 'IP'" class="px-4 py-3 text-slate-300">
+                    <td v-if="currentSensorType === 'EX' || currentSensorType === 'IP'"
+                      class="px-4 py-3 text-slate-300">
                       {{ (item as any).reservoir_level ?? '-' }}
                     </td>
-                    <td v-if="currentSensorType === 'IP'" class="px-4 py-3 text-slate-300">{{ (item as any).lr_value }}</td>
-                    <td v-if="currentSensorType === 'IP'" class="px-4 py-3 text-slate-300">{{ (item as any).ud_value }}</td>
-                    <td v-if="currentSensorType !== 'IP'" class="px-4 py-3 text-slate-300">{{ (item as any).value }}</td>
+                    <td v-if="currentSensorType === 'IP'" class="px-4 py-3 text-slate-300">{{ (item as any).lr_value }}
+                    </td>
+                    <td v-if="currentSensorType === 'IP'" class="px-4 py-3 text-slate-300">{{ (item as any).ud_value }}
+                    </td>
+                    <td v-if="currentSensorType !== 'IP'" class="px-4 py-3 text-slate-300">{{ (item as any).value }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="currentData.length === 0" class="p-8 text-center text-slate-500">
+              <div v-if="tablePageData.length === 0" class="p-8 text-center text-slate-500">
                 暂无数据
               </div>
-            </div>
-            <!-- 分页控件 -->
-            <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-t border-slate-700">
-              <span class="text-sm text-slate-400">
-                共 {{ sensorStore.sensorStats?.total_records || 0 }} 条
-              </span>
-              <div class="flex items-center gap-2">
-                <button
-                  @click="currentPage--"
-                  :disabled="currentPage === 1"
-                  class="px-3 py-1 bg-slate-700 disabled:opacity-50 text-white text-sm rounded"
-                >
-                  上一页
-                </button>
-                <span class="text-sm text-white">
-                  {{ currentPage }} / {{ totalPages }}
+              <!-- 分页控件 -->
+              <div
+                class="sticky bottom-0 flex items-center justify-between px-4 py-3 bg-slate-900 border-t border-slate-700">
+                <span class="text-sm text-slate-400">
+                  共 {{ tableTotalRecords }} 条
                 </span>
-                <button
-                  @click="currentPage++"
-                  :disabled="currentPage === totalPages"
-                  class="px-3 py-1 bg-slate-700 disabled:opacity-50 text-white text-sm rounded"
-                >
-                  下一页
-                </button>
+                <div class="flex items-center gap-2">
+                  <button @click="currentPage--" :disabled="currentPage === 1"
+                    class="px-3 py-1 bg-slate-700 disabled:opacity-50 text-white text-sm rounded">
+                    上一页
+                  </button>
+                  <span class="text-sm text-white">
+                    {{ currentPage }} / {{ totalPages }}
+                  </span>
+                  <button @click="currentPage++" :disabled="currentPage === totalPages"
+                    class="px-3 py-1 bg-slate-700 disabled:opacity-50 text-white text-sm rounded">
+                    下一页
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -654,73 +648,42 @@ onMounted(async () => {
         <form @submit.prevent="submitAddData" class="space-y-4">
           <div>
             <label class="block text-sm text-slate-400 mb-2">观测时间</label>
-            <input
-              type="datetime-local"
-              v-model="addForm.observation_time"
-              step="1"
-              required
-              class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-            />
+            <input type="datetime-local" v-model="addForm.observation_time" step="1" required
+              class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500" />
           </div>
 
           <div v-if="currentSensorType === 'EX' || currentSensorType === 'IP'">
             <label class="block text-sm text-slate-400 mb-2">水库水位</label>
-            <input
-              type="number"
-              step="0.01"
-              v-model.number="addForm.reservoir_level"
-              class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-            />
+            <input type="number" step="0.01" v-model.number="addForm.reservoir_level"
+              class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500" />
           </div>
 
           <div v-if="currentSensorType === 'IP'">
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm text-slate-400 mb-2">左右位移</label>
-                <input
-                  type="number"
-                  step="0.001"
-                  v-model.number="addForm.lr_value"
-                  required
-                  class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                />
+                <input type="number" step="0.001" v-model.number="addForm.lr_value" required
+                  class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500" />
               </div>
               <div>
                 <label class="block text-sm text-slate-400 mb-2">上下游位移</label>
-                <input
-                  type="number"
-                  step="0.001"
-                  v-model.number="addForm.ud_value"
-                  required
-                  class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                />
+                <input type="number" step="0.001" v-model.number="addForm.ud_value" required
+                  class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500" />
               </div>
             </div>
           </div>
 
           <div v-if="currentSensorType !== 'IP'">
             <label class="block text-sm text-slate-400 mb-2">监测值</label>
-            <input
-              type="number"
-              step="0.001"
-              v-model.number="addForm.value"
-              required
-              class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-            />
+            <input type="number" step="0.001" v-model.number="addForm.value" required
+              class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500" />
           </div>
 
           <div class="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              @click="showAddDialog = false"
-              class="px-4 py-2 text-slate-300 hover:text-white"
-            >
+            <button type="button" @click="showAddDialog = false" class="px-4 py-2 text-slate-300 hover:text-white">
               取消
             </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-            >
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
               提交
             </button>
           </div>
