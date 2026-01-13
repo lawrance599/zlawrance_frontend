@@ -4,8 +4,18 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useSensorStore } from '@/stores/sensor';
 import { pointsApi } from '@/api/points';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
+import { init, graphic, use } from 'echarts/core';
+import { LineChart } from 'echarts/charts';
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import type { EChartsOption } from 'echarts';
+
+// 注册 ECharts 组件
+use([LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
 const router = useRouter();
 const route = useRoute();
@@ -72,7 +82,7 @@ const addForm = ref({
 });
 
 // ECharts 实例
-let chartInstance: ECharts | null = null;
+let chartInstance: any = null;
 const chartRef = ref<HTMLDivElement | null>(null);
 
 // 当前传感器类型和编码
@@ -225,11 +235,12 @@ function renderChart() {
     chartInstance.dispose();
   }
 
-  chartInstance = echarts.init(chartRef.value);
+  const instance = init(chartRef.value);
+  chartInstance = instance;
   const data = currentData.value;
   const type = sensorStore.selectedSensor.sensor_type;
 
-  let option: echarts.EChartsOption;
+  let option: EChartsOption;
 
   if (type === 'IP') {
     // 倒垂线有左右和上下两个值
@@ -321,7 +332,7 @@ function renderChart() {
           lineStyle: { color: '#3b82f6', width: 2 },
           itemStyle: { color: '#3b82f6' },
           areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            color: new graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
               { offset: 1, color: 'rgba(59, 130, 246, 0)' },
             ]),
@@ -331,7 +342,7 @@ function renderChart() {
     };
   }
 
-  chartInstance.setOption(option);
+  instance.setOption(option);
 }
 
 // 打开新增数据弹窗
