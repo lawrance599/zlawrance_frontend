@@ -54,15 +54,51 @@ export const useSensorStore = defineStore('sensor', () => {
   }
 
   // 获取监测数据
-  async function fetchData(type: 'EX' | 'TC' | 'IP', code: string, start?: string, end?: string) {
+  async function fetchData(type: 'EX' | 'TC' | 'IP', code: string, start?: string, end?: string, limit?: number, offset?: number) {
     dataLoading.value = true;
     try {
       if (type === 'EX') {
-        extensometerData.value = await dataApi.getExtensometer({ id: code, start, end });
+        extensometerData.value = await dataApi.getExtensometer({ id: code, start, end, limit, offset });
       } else if (type === 'TC') {
-        hydrostaticLevelData.value = await dataApi.getHydrostaticLevel({ id: code, start, end });
+        hydrostaticLevelData.value = await dataApi.getHydrostaticLevel({ id: code, start, end, limit, offset });
       } else if (type === 'IP') {
-        invertedPlumbLineData.value = await dataApi.getInvertedPlumbLine({ id: code, start, end });
+        invertedPlumbLineData.value = await dataApi.getInvertedPlumbLine({ id: code, start, end, limit, offset });
+      }
+    } finally {
+      dataLoading.value = false;
+    }
+  }
+
+  // 增量获取监测数据（追加到现有数据）
+  async function fetchMoreData(type: 'EX' | 'TC' | 'IP', code: string, start?: string, end?: string, limit?: number, offset?: number) {
+    dataLoading.value = true;
+    try {
+      let newData: any[] = [];
+      if (type === 'EX') {
+        newData = await dataApi.getExtensometer({ id: code, start, end, limit, offset });
+        extensometerData.value = [...extensometerData.value, ...newData];
+      } else if (type === 'TC') {
+        newData = await dataApi.getHydrostaticLevel({ id: code, start, end, limit, offset });
+        hydrostaticLevelData.value = [...hydrostaticLevelData.value, ...newData];
+      } else if (type === 'IP') {
+        newData = await dataApi.getInvertedPlumbLine({ id: code, start, end, limit, offset });
+        invertedPlumbLineData.value = [...invertedPlumbLineData.value, ...newData];
+      }
+    } finally {
+      dataLoading.value = false;
+    }
+  }
+
+  // 分页获取监测数据（替换数据）
+  async function fetchPageData(type: 'EX' | 'TC' | 'IP', code: string, limit: number, offset: number, start?: string, end?: string) {
+    dataLoading.value = true;
+    try {
+      if (type === 'EX') {
+        extensometerData.value = await dataApi.getExtensometer({ id: code, start, end, limit, offset });
+      } else if (type === 'TC') {
+        hydrostaticLevelData.value = await dataApi.getHydrostaticLevel({ id: code, start, end, limit, offset });
+      } else if (type === 'IP') {
+        invertedPlumbLineData.value = await dataApi.getInvertedPlumbLine({ id: code, start, end, limit, offset });
       }
     } finally {
       dataLoading.value = false;
@@ -99,6 +135,8 @@ export const useSensorStore = defineStore('sensor', () => {
     fetchPoints,
     fetchSensorStats,
     fetchData,
+    fetchMoreData,
+    fetchPageData,
     selectSensor,
     setSensorType,
   };

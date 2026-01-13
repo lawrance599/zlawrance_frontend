@@ -18,6 +18,18 @@ const validDateRange = ref({
   max: ''
 });
 
+// 图表展示点数（默认20）
+const chartLimit = ref(20);
+
+// 分页状态（表格）
+const currentPage = ref(1);
+const pageSize = 10;
+
+const totalPages = computed(() => {
+  if (!sensorStore.sensorStats?.total_records) return 1;
+  return Math.ceil(sensorStore.sensorStats.total_records / pageSize);
+});
+
 // 视图模式
 const viewMode = ref<'chart' | 'table'>('chart');
 
@@ -78,8 +90,13 @@ async function selectPoint(point: typeof sensorStore.points[0]) {
 async function selectPointWithAutoLoad(point: typeof sensorStore.points[0]) {
   sensorStore.selectSensor(point);
 
+  // 重置分页
+  currentPage.value = 1;
+
   try {
     const stats = await pointsApi.getStats(point.code);
+    sensorStore.sensorStats = stats;
+
     if (stats?.last_observation && stats?.first_observation) {
       const lastObs = new Date(stats.last_observation);
       const firstObs = new Date(stats.first_observation);
@@ -94,15 +111,18 @@ async function selectPointWithAutoLoad(point: typeof sensorStore.points[0]) {
       startDate.value = formatDateTime(startCalc);
       endDate.value = formatDateTime(lastObs);
 
-      await fetchData();
+      await fetchData(chartLimit.value);
+      await fetchTableData();
     } else {
       validDateRange.value = { min: '', max: '' };
-      await fetchData();
+      await fetchData(chartLimit.value);
+      await fetchTableData();
     }
   } catch (error) {
     console.error('获取测点统计数据失败:', error);
     validDateRange.value = { min: '', max: '' };
-    await fetchData();
+    await fetchData(chartLimit.value);
+    await fetchTableData();
   }
 }
 
@@ -117,31 +137,67 @@ function formatDateTime(date: Date): string {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
 
+// 自动补全秒
+function formatWithSeconds(dateStr: string): string {
+  if (!dateStr) return dateStr;
+  if (dateStr.length === 16) {
+    return dateStr + ':00';
+  }
+  return dateStr;
+}
+
 // 获取监测数据
-async function fetchData() {
+async function fetchData(limit?: number) {
   if (!sensorStore.selectedSensor) return;
 
   const code = sensorStore.selectedSensor.code;
   const type = sensorStore.selectedSensor.sensor_type as 'EX' | 'TC' | 'IP';
 
-  // 自动补全秒（如果没有的话）
-  const formatWithSeconds = (dateStr: string) => {
-    if (!dateStr) return dateStr;
-    if (dateStr.length === 16) {
-      return dateStr + ':00';
-    }
-    return dateStr;
-  };
-
   const formattedStart = formatWithSeconds(startDate.value);
   const formattedEnd = formatWithSeconds(endDate.value);
 
-  await sensorStore.fetchData(type, code, formattedStart || undefined, formattedEnd || undefined);
+  await sensorStore.fetchData(type, code, formattedStart || undefined, formattedEnd || undefined, limit);
 
   if (viewMode.value === 'chart') {
     await nextTick();
     renderChart();
   }
+}
+
+// 增量加载更多数据
+async function loadMoreData() {
+  if (!sensorStore.selectedSensor) return;
+
+  const currentDataLength = currentData.value.length;
+  const newLimit = chartLimit.value;
+
+  if (newLimit <= currentDataLength) return; // 不需要加载更多
+
+  const code = sensorStore.selectedSensor.code;
+  const type = sensorStore.selectedSensor.sensor_type as 'EX' | 'TC' | 'IP';
+
+  const formattedStart = formatWithSeconds(startDate.value);
+  const formattedEnd = formatWithSeconds(endDate.value);
+
+  // 增量请求：limit = 新值 - 当前数量, offset = 当前数量
+  await sensorStore.fetchMoreData(type, code, formattedStart || undefined, formattedEnd || undefined, newLimit - currentDataLength, currentDataLength);
+
+  await nextTick();
+  renderChart();
+}
+
+// 获取表格数据（分页）
+async function fetchTableData() {
+  if (!sensorStore.selectedSensor) return;
+
+  const code = sensorStore.selectedSensor.code;
+  const type = sensorStore.selectedSensor.sensor_type as 'EX' | 'TC' | 'IP';
+  const offset = (currentPage.value - 1) * pageSize;
+
+  const formattedStart = formatWithSeconds(startDate.value);
+  const formattedEnd = formatWithSeconds(endDate.value);
+
+  await sensorStore.fetchPageData(type, code, pageSize, offset, formattedStart || undefined, formattedEnd || undefined);
 }
 
 // 渲染图表
@@ -336,6 +392,18 @@ window.addEventListener('resize', () => {
   chartInstance?.resize();
 });
 
+// 监听图表点数变化（增量加载）
+watch(chartLimit, async (newVal, oldVal) => {
+  if (newVal > oldVal) {
+    await loadMoreData();
+  }
+});
+
+// 监听页码变化（表格分页）
+watch(currentPage, async () => {
+  await fetchTableData();
+});
+
 onMounted(async () => {
   sensorStore.fetchPoints();
   // 检查路由参数中的sensorCode
@@ -503,7 +571,18 @@ onMounted(async () => {
             <div v-if="!sensorStore.selectedSensor" class="h-full flex items-center justify-center text-slate-500">
               请从左侧选择一个传感器查看数据
             </div>
-            <div v-else class="h-full bg-slate-800 rounded-xl p-4">
+            <div v-else class="h-full bg-slate-800 rounded-xl p-4 relative">
+              <!-- 显示点数控制 -->
+              <div class="absolute top-4 right-4 flex items-center gap-2 z-10">
+                <span class="text-xs text-slate-400">显示点数:</span>
+                <input
+                  type="number"
+                  v-model.number="chartLimit"
+                  min="20"
+                  step="10"
+                  class="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white text-sm"
+                />
+              </div>
               <div ref="chartRef" class="w-full h-full min-h-[400px]"></div>
             </div>
           </div>
@@ -544,6 +623,31 @@ onMounted(async () => {
               </table>
               <div v-if="currentData.length === 0" class="p-8 text-center text-slate-500">
                 暂无数据
+              </div>
+            </div>
+            <!-- 分页控件 -->
+            <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-t border-slate-700">
+              <span class="text-sm text-slate-400">
+                共 {{ sensorStore.sensorStats?.total_records || 0 }} 条
+              </span>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="currentPage--"
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1 bg-slate-700 disabled:opacity-50 text-white text-sm rounded"
+                >
+                  上一页
+                </button>
+                <span class="text-sm text-white">
+                  {{ currentPage }} / {{ totalPages }}
+                </span>
+                <button
+                  @click="currentPage++"
+                  :disabled="currentPage === totalPages"
+                  class="px-3 py-1 bg-slate-700 disabled:opacity-50 text-white text-sm rounded"
+                >
+                  下一页
+                </button>
               </div>
             </div>
           </div>
