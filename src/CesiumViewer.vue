@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 // ============== 常量配置 ==============
 const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2OTg0ZDE3MC1hZGVmLTQ2NTAtYjUyNi1jZWY0MjE3MjE3ZmIiLCJpZCI6MzE2NzEwLCJpYXQiOjE3NTExOTAxNjN9.b0XFq_tbFnZ4vsHtxG4J58GcgMspk8Vp_3GQN_uKvSE'
@@ -89,8 +89,9 @@ function extractSensorCode(name) {
 function createViewer(containerId) {
     return new Cesium.Viewer(containerId, {
         imageryProvider: new Cesium.IonImageryProvider({ assetId: IMAGERY_ASSET_ID }),
-        timeline: props.timeline,
-        animation: props.animation,
+        // 始终启用timeline和animation，通过CSS控制可见性
+        timeline: true,
+        animation: true,
         baseLayerPicker: props.baseLayerPicker,
         sceneModePicker: props.sceneModePicker,
         fullscreenButton: props.fullscreenButton,
@@ -130,6 +131,7 @@ async function loadTileset(viewerInstance) {
 function configureScene(viewerInstance) {
     viewerInstance.scene.globe.depthTestAgainstTerrain = props.depthTestAgainstTerrain
     viewerInstance.scene.globe.enableLighting = props.enableLighting
+    viewerInstance.scene.terrainShadows = Cesium.ShadowMode.ENABLED
 }
 
 // ============== 点击事件处理 ==============
@@ -355,6 +357,37 @@ defineExpose({
     setDepthTestAgainstTerrain
 })
 
+// ============== 监听 Props 变化 ==============
+
+// 监听 timeline 变化
+watch(() => props.timeline, (newVal) => {
+    if (viewer?.timeline?.container) {
+        viewer.timeline.container.style.display = newVal ? 'block' : 'none'
+    }
+})
+
+// 监听 animation 变化
+watch(() => props.animation, (newVal) => {
+    if (viewer?.animation?.container) {
+        viewer.animation.container.style.display = newVal ? 'block' : 'none'
+    }
+})
+
+// 监听 enableLighting 变化
+watch(() => props.enableLighting, (newVal) => {
+    if (viewer) {
+        viewer.scene.globe.enableLighting = newVal
+        viewer.scene.terrainShadows = newVal ? Cesium.ShadowMode.ENABLED : Cesium.ShadowMode.DISABLED
+    }
+})
+
+// 监听 depthTestAgainstTerrain 变化
+watch(() => props.depthTestAgainstTerrain, (newVal) => {
+    if (viewer) {
+        viewer.scene.globe.depthTestAgainstTerrain = newVal
+    }
+})
+
 // ============== 生命周期 ==============
 
 onMounted(async () => {
@@ -366,6 +399,14 @@ onMounted(async () => {
 
     // 配置场景
     configureScene(viewer)
+
+    // 根据props初始值设置timeline和animation的显示状态
+    if (viewer.timeline?.container) {
+        viewer.timeline.container.style.display = props.timeline ? 'block' : 'none'
+    }
+    if (viewer.animation?.container) {
+        viewer.animation.container.style.display = props.animation ? 'block' : 'none'
+    }
 
     // 加载 3D 模型
     try {

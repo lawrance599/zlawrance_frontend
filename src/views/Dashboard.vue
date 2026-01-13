@@ -12,8 +12,8 @@ const sensorStore = useSensorStore();
 // Cesium 设置
 const enableLighting = ref(true);
 const depthTestAgainstTerrain = ref(true);
-const showTimeline = ref(false);
-const showAnimation = ref(false);
+const showTimeline = ref(true);
+const showAnimation = ref(true);
 
 // 处理传感器点击
 function handleSensorClick(code: string) {
