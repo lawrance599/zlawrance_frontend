@@ -89,7 +89,6 @@ function extractSensorCode(name) {
 function createViewer(containerId) {
     return new Cesium.Viewer(containerId, {
         imageryProvider: new Cesium.IonImageryProvider({ assetId: IMAGERY_ASSET_ID }),
-        terrainProvider: Cesium.createWorldTerrain(),
         // 始终启用timeline和animation，通过CSS控制可见性
         timeline: true,
         animation: true,
@@ -129,10 +128,18 @@ async function loadTileset(viewerInstance) {
 /**
  * 配置场景环境
  */
-function configureScene(viewerInstance) {
+async function configureScene(viewerInstance) {
     viewerInstance.scene.globe.depthTestAgainstTerrain = props.depthTestAgainstTerrain
     viewerInstance.scene.globe.enableLighting = props.enableLighting
     viewerInstance.scene.terrainShadows = Cesium.ShadowMode.ENABLED
+
+    // 异步加载 Cesium Ion 全球地形
+    try {
+        const terrainProvider = await Cesium.CesiumTerrainProvider.fromIonAssetId(1)
+        viewerInstance.scene.globe.terrainProvider = terrainProvider
+    } catch (error) {
+        console.warn('加载地形失败:', error)
+    }
 }
 
 // ============== 点击事件处理 ==============
@@ -399,7 +406,7 @@ onMounted(async () => {
     viewer = createViewer('cesiumContainer')
 
     // 配置场景
-    configureScene(viewer)
+    await configureScene(viewer)
 
     // 根据props初始值设置timeline和animation的显示状态
     if (viewer.timeline?.container) {
