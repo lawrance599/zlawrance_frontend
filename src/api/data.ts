@@ -46,12 +46,10 @@ export const dataApi = {
     reservoir_level?: number;
     value: number;
   }) {
-    const response = await client.post(`/data/${data.sensor_code}/extensometer`, null, {
-      params: {
-        observation_time: data.observation_time,
-        reservoir_level: data.reservoir_level,
-        value: data.value,
-      },
+    const response = await client.post(`/data/${data.sensor_code}/extensometer`, {
+      observation_time: data.observation_time,
+      reservoir_level: data.reservoir_level,
+      value: data.value,
     });
     return response.data;
   },
@@ -76,11 +74,9 @@ export const dataApi = {
     observation_time: string;
     value: number;
   }) {
-    const response = await client.post(`/data/${data.sensor_code}/hydrostatic-level`, null, {
-      params: {
-        observation_time: data.observation_time,
-        value: data.value,
-      },
+    const response = await client.post(`/data/${data.sensor_code}/hydrostatic-level`, {
+      observation_time: data.observation_time,
+      value: data.value,
     });
     return response.data;
   },
@@ -107,13 +103,11 @@ export const dataApi = {
     lr_value: number;
     ud_value: number;
   }) {
-    const response = await client.post(`/data/${data.sensor_code}/inverted-plumb-line`, null, {
-      params: {
-        observation_time: data.observation_time,
-        reservoir_level: data.reservoir_level,
-        lr_value: data.lr_value,
-        ud_value: data.ud_value,
-      },
+    const response = await client.post(`/data/${data.sensor_code}/inverted-plumb-line`, {
+      observation_time: data.observation_time,
+      reservoir_level: data.reservoir_level,
+      lr_value: data.lr_value,
+      ud_value: data.ud_value,
     });
     return response.data;
   },

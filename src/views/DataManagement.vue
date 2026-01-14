@@ -404,6 +404,9 @@ async function submitAddData() {
 
     showAddDialog.value = false;
     await fetchData();
+    // 更新测点统计信息（包含 last_observation）
+    const stats = await pointsApi.getStats(sensorStore.selectedSensor!.code);
+    sensorStore.sensorStats = stats;
   } catch (error) {
     console.error('新增数据失败:', error);
   }
