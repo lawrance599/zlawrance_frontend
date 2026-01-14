@@ -15,7 +15,6 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlMDA1ZjExOS1iNWUxLTRjNDEtYjk3ZS1mODI5ZTU3OWZmYzIiLCJpZCI6MzY5NDg2LCJpYXQiOjE3NjgwNTkxMjl9.3AKIGEkVaOMWAYtoynSoHV2cemyaTZvY3ixoO0-PmeQ'
 const TILESET_ASSET_ID = 4345974
 const IMAGERY_ASSET_ID = 3954
-const TIANDITU_TERRAIN_TOKEN = '828789eb488cd54fbbb998a4db80bbe5'
 
 // 支持的传感器编码前缀
 const SENSOR_CODE_PREFIXES = ['IP', 'EX', 'TC']
@@ -90,15 +89,7 @@ function extractSensorCode(name) {
 function createViewer(containerId) {
     return new Cesium.Viewer(containerId, {
         imageryProvider: new Cesium.IonImageryProvider({ assetId: IMAGERY_ASSET_ID }),
-        terrainProvider: new Cesium.WebMapServiceTerrainProvider({
-            url: 'http://t0.tianditu.com.cn/ter_c/wmts',
-            layer: 'ter_c',
-            style: 'default',
-            format: 'image/png',
-            tileMatrixSetID: 'c',
-            maximumLevel: 14,
-            token: { tk: TIANDITU_TERRAIN_TOKEN }
-        }),
+        terrainProvider: Cesium.createWorldTerrain(),
         // 始终启用timeline和animation，通过CSS控制可见性
         timeline: true,
         animation: true,
