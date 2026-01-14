@@ -427,6 +427,18 @@ watch(viewMode, async (newMode) => {
   }
 });
 
+// 监听测点统计信息变化，更新有效日期范围
+watch(() => sensorStore.sensorStats, (stats) => {
+  if (stats?.last_observation && stats?.first_observation) {
+    const lastObs = new Date(stats.last_observation);
+    const firstObs = new Date(stats.first_observation);
+
+    validDateRange.value.min = formatDateTime(firstObs);
+    // 加上1小时，因为查询是左闭右开 [start, end)，需要能查到 last_observation 的数据
+    validDateRange.value.max = formatDateTime(new Date(lastObs.getTime() + 60 * 60 * 1000));
+  }
+}, { immediate: true });
+
 // 监听时间范围变化，重新获取表格数据
 watch([startDate, endDate], async () => {
   if (viewMode.value === 'table') {
