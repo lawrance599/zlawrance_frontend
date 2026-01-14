@@ -12,8 +12,8 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 // ============== 常量配置 ==============
-const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2OTg0ZDE3MC1hZGVmLTQ2NTAtYjUyNi1jZWY0MjE3MjE3ZmIiLCJpZCI6MzE2NzEwLCJpYXQiOjE3NTExOTAxNjN9.b0XFq_tbFnZ4vsHtxG4J58GcgMspk8Vp_3GQN_uKvSE'
-const TILESET_ASSET_ID = 4337720
+const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlMDA1ZjExOS1iNWUxLTRjNDEtYjk3ZS1mODI5ZTU3OWZmYzIiLCJpZCI6MzY5NDg2LCJpYXQiOjE3NjgwNTkxMjl9.3AKIGEkVaOMWAYtoynSoHV2cemyaTZvY3ixoO0-PmeQ'
+const TILESET_ASSET_ID = 4345974
 const IMAGERY_ASSET_ID = 3954
 
 // 支持的传感器编码前缀
